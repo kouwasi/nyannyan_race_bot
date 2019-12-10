@@ -11,23 +11,25 @@ defmodule NyannyanRaceBot.Task.RaceTask do
 
   @impl true
   def handle_info(:run, %{cats: cats} = state) do
-    if state.cats |> Enum.map(&(Enum.count(&1))) |> Enum.sum == 0 do
-      message = Enum.map(1..4, &("#{&1}. :cat:\n")) |> List.to_string
+    if state.cats |> Enum.map(&Enum.count(&1)) |> Enum.sum() == 0 do
+      message = Enum.map(1..4, &"#{&1}. :cat:\n") |> List.to_string()
 
       send_message_with_header(state.id, message)
 
       {:stop, :normal, state}
     else
-      message = state.cats
-      |> Enum.reject(&(Enum.empty?(&1)))
-      |> Enum.map(&([":checkered_flag:"] ++ &1 ++ ".\n"))
-      |> List.to_string()
+      message =
+        state.cats
+        |> Enum.reject(&Enum.empty?(&1))
+        |> Enum.map(&([":checkered_flag:"] ++ &1 ++ ".\n"))
+        |> List.to_string()
 
-      cats = Enum.map(cats, fn x ->
-        index = :rand.uniform(2)
-        max = Enum.count(x) - 1
-        Enum.slice(x, index..max)
-      end)
+      cats =
+        Enum.map(cats, fn x ->
+          index = :rand.uniform(2)
+          max = Enum.count(x) - 1
+          Enum.slice(x, index..max)
+        end)
 
       state = %{state | cats: cats}
 
@@ -48,11 +50,15 @@ defmodule NyannyanRaceBot.Task.RaceTask do
   defp build_state(channel_id, spacer) do
     %{
       id: channel_id,
-      cats: Enum.map(1..4, fn _ ->
-        [@cat | Enum.map(1..10, fn _ -> spacer end)]
-        |> Enum.reverse()
-      end)
+      cats: build_cats(spacer)
     }
+  end
+
+  defp build_cats(spacer) do
+    Enum.map(1..4, fn _ ->
+      [@cat | Enum.map(1..10, fn _ -> spacer end)]
+      |> Enum.reverse()
+    end)
   end
 
   def start_link(channel_id, spacer) do

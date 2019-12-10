@@ -6,11 +6,13 @@ defmodule NyannyanRaceBot.Command.RaceCommand do
   Cogs.def nyan do
     {:ok, guild} = Cogs.guild()
     spacer = guild.emojis |> Enum.find(&(&1.name == "space"))
-    spacer = if spacer do
-      "<:#{spacer.name}:#{spacer.id}>"
-    else
-      "　 "
-    end
+
+    spacer =
+      if spacer do
+        "<:#{spacer.name}:#{spacer.id}>"
+      else
+        "　 "
+      end
 
     {:ok, pid} = RaceTask.start_link(message.channel_id, spacer)
     RaceTask.run(pid)
