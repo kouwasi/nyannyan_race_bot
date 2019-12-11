@@ -11,7 +11,7 @@ defmodule NyannyanRaceBot.Task.RaceTask do
 
   @impl true
   def handle_info(:run, %{cats: cats} = state) do
-    if state.cats |> Enum.map(&Enum.count(&1)) |> Enum.sum() == 0 do
+    if cats |> Enum.map(&Enum.count(&1)) |> Enum.sum() == 0 do
       message = Enum.map(1..4, &"#{&1}. :cat:\n") |> List.to_string()
 
       send_message_with_header(state.id, message)
@@ -19,15 +19,20 @@ defmodule NyannyanRaceBot.Task.RaceTask do
       {:stop, :normal, state}
     else
       message =
-        state.cats
+        cats
         |> Enum.reject(&Enum.empty?(&1))
         |> Enum.map(&([":checkered_flag:"] ++ &1 ++ ".\n"))
         |> List.to_string()
 
       cats =
         Enum.map(cats, fn x ->
-          index = :rand.uniform(2)
-          max = Enum.count(x) - 1
+          {index, max} =
+            if x |> Enum.at(1) == @cat do
+              {1, 1}
+            else
+              {:rand.uniform(2), Enum.count(x) - 1}
+            end
+
           Enum.slice(x, index..max)
         end)
 
