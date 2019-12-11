@@ -10,39 +10,38 @@ defmodule NyannyanRaceBot.Task.RaceTask do
   def init({channel_id, spacer}), do: {:ok, build_state(channel_id, spacer)}
 
   @impl true
+  def handle_info(:run, %{cats: [[], [], [], []]} = state) do
+    message = Enum.map(1..4, &"#{&1}. :cat:\n") |> List.to_string()
+    send_message_with_header(state.id, message)
+    {:stop, :normal, state}
+  end
+
+  @impl true
   def handle_info(:run, %{cats: cats} = state) do
-    if cats |> Enum.map(&Enum.count(&1)) |> Enum.sum() == 0 do
-      message = Enum.map(1..4, &"#{&1}. :cat:\n") |> List.to_string()
+    message =
+      cats
+      |> Enum.reject(&Enum.empty?(&1))
+      |> Enum.map(&([":checkered_flag:"] ++ &1 ++ ".\n"))
+      |> List.to_string()
 
-      send_message_with_header(state.id, message)
+    cats =
+      Enum.map(cats, fn x ->
+        {index, max} =
+          if x |> Enum.at(1) == @cat do
+            {1, 1}
+          else
+            {:rand.uniform(2), Enum.count(x) - 1}
+          end
 
-      {:stop, :normal, state}
-    else
-      message =
-        cats
-        |> Enum.reject(&Enum.empty?(&1))
-        |> Enum.map(&([":checkered_flag:"] ++ &1 ++ ".\n"))
-        |> List.to_string()
+        Enum.slice(x, index..max)
+      end)
 
-      cats =
-        Enum.map(cats, fn x ->
-          {index, max} =
-            if x |> Enum.at(1) == @cat do
-              {1, 1}
-            else
-              {:rand.uniform(2), Enum.count(x) - 1}
-            end
+    state = %{state | cats: cats}
 
-          Enum.slice(x, index..max)
-        end)
+    send_message_with_header(state.id, message)
 
-      state = %{state | cats: cats}
-
-      send_message_with_header(state.id, message)
-
-      schedule_next_job()
-      {:noreply, state}
-    end
+    schedule_next_job()
+    {:noreply, state}
   end
 
   defp send_message_with_header(channel_id, message),
