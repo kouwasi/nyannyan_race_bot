@@ -30,7 +30,7 @@ defmodule NyannyanRaceBot.Task.RaceTask do
           if x |> Enum.at(1) == @cat do
             {1, 1}
           else
-            {:rand.uniform(2), Enum.count(x) - 1}
+            {:rand.uniform(3) - 1, Enum.count(x) - 1}
           end
 
         Enum.slice(x, index..max)
